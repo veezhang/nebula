@@ -13,7 +13,6 @@
 
 namespace nebula {
 namespace storage {
-
 void AdminTaskProcessor::process(const cpp2::AddAdminTaskRequest& req) {
   auto taskManager = AdminTaskManager::instance();
 
@@ -64,6 +63,8 @@ void AdminTaskProcessor::process(const cpp2::AddAdminTaskRequest& req) {
   TaskContext ctx(req, std::move(cb));
   auto task = AdminTaskFactory::createAdminTask(env_, std::move(ctx));
   if (task) {
+    taskManager->saveTaskStatus(
+        ctx.jobId_, ctx.taskId_, ctx.cmd_, nebula::meta::cpp2::JobStatus::RUNNING);
     taskManager->addAsyncTask(task);
   } else {
     cpp2::PartitionResult thriftRet;

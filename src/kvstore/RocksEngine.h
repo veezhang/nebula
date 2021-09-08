@@ -75,6 +75,30 @@ class RocksPrefixIter : public KVIterator {
   rocksdb::Slice prefix_;
 };
 
+class RocksCommonIter : public KVIterator {
+ public:
+  explicit RocksCommonIter(rocksdb::Iterator* iter) : iter_(iter) {}
+
+  ~RocksCommonIter() = default;
+
+  bool valid() const override { return !!iter_ && iter_->Valid(); }
+
+  void next() override { iter_->Next(); }
+
+  void prev() override { iter_->Prev(); }
+
+  folly::StringPiece key() const override {
+    return folly::StringPiece(iter_->key().data(), iter_->key().size());
+  }
+
+  folly::StringPiece val() const override {
+    return folly::StringPiece(iter_->value().data(), iter_->value().size());
+  }
+
+ protected:
+  std::unique_ptr<rocksdb::Iterator> iter_;
+};
+
 /**************************************************************************
  *
  * An implementation of KVEngine based on Rocksdb
@@ -128,6 +152,7 @@ class RocksEngine : public KVEngine {
                                           const std::string& prefix,
                                           std::unique_ptr<KVIterator>* iter) override;
 
+  nebula::cpp2::ErrorCode scan(std::unique_ptr<KVIterator>* storageIter) override;
   /*********************
    * Data modification
    ********************/
